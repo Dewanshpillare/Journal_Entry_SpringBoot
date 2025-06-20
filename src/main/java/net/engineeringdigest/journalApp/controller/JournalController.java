@@ -1,51 +1,48 @@
 package net.engineeringdigest.journalApp.controller;
 
-import net.engineeringdigest.journalApp.entity.JournalPOJO;
+import net.engineeringdigest.journalApp.entity.JournalEntry;
+import net.engineeringdigest.journalApp.service.JournalService;
+import org.bson.types.ObjectId;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 
-@RestController
+@RestController // marks the class as bean and returns the required data in JSON format.
 @RequestMapping("/journal")
 public class JournalController {
 
-    private Map<Long, JournalPOJO> map = new HashMap<>();
+    @Autowired
+    private JournalService journalService;
 
     // ✅ Create a new entry
     @PostMapping
-    public String createEntry(@RequestBody JournalPOJO entry) {
-        map.put(entry.getId(), entry);
-        return "Entry created";
+    public JournalEntry createEntry(@RequestBody JournalEntry entry) {
+        return journalService.save(entry);
     }
 
     // ✅ Get all entries
-    @GetMapping
-    public List<JournalPOJO> getAllEntries() {
-        return new ArrayList<>(map.values());
+    @GetMapping("/allEntry")
+    public List<JournalEntry> getAllEntries() {
+        return journalService.getAll();
     }
 
     // ✅ Get entry by ID
     @GetMapping("/{id}")
-    public JournalPOJO getEntry(@PathVariable Long id) {
-        return map.get(id);
+    public JournalEntry getEntry(@PathVariable ObjectId id) {
+        Optional<JournalEntry> entry = journalService.getById(id);
+        return entry.get();
     }
 
     // ✅ Update entry by ID
     @PutMapping("/{id}")
-    public String updateEntry(@PathVariable Long id, @RequestBody JournalPOJO entry) {
-        if (map.containsKey(id)) {
-            map.put(id, entry);
-            return "Entry updated";
-        } else {
-            return "Entry not found";
-        }
+    public JournalEntry updateEntry(@PathVariable ObjectId id, @RequestBody JournalEntry entry) {
+        return journalService.updateById(id, entry);
     }
 
     // ✅ Delete entry by ID
     @DeleteMapping("/{id}")
-    public JournalPOJO deleteEntry(@PathVariable Long id) {
-        JournalPOJO entry = map.get(id);
-        map.remove(id);
-        return entry;
+    public JournalEntry deleteEntry(@PathVariable ObjectId id) {
+        return journalService.deleteById(id);
     }
 }
