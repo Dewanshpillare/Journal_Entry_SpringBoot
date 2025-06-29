@@ -2,9 +2,11 @@ package net.engineeringdigest.journalApp.service;
 
 import net.engineeringdigest.journalApp.JournalRepo.JournalRepo;
 import net.engineeringdigest.journalApp.entity.JournalEntry;
+import net.engineeringdigest.journalApp.entity.User;
 import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,10 +15,26 @@ import java.util.Optional;
 public class JournalService {
 
     @Autowired
-    JournalRepo journalRepo;
+    private JournalRepo journalRepo;
 
-    public JournalEntry save(JournalEntry entry){
-        return journalRepo.save(entry);
+    @Autowired
+    private UserService userService;
+
+    @Transactional
+    public JournalEntry save(JournalEntry entry, String userName){
+        Optional<User> userOptional = userService.findByUserName(userName);
+
+        if(userOptional.isPresent()){
+            User user = userOptional.get();
+
+            JournalEntry savedEntry = journalRepo.save(entry);
+            user.getJournalEntries().add(savedEntry);
+
+            userService.saveNewUser(user);
+            return savedEntry;
+        }else{
+            return null;
+        }
     }
 
     public List<JournalEntry> getAll(){
